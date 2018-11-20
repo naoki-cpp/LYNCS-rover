@@ -5,6 +5,7 @@
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
 #include "local_libs/Matrix.h"
+#include "local_libs/RoverMotor.h"
 
 #define bv  0.05745024
 #define cv 0.009521774
@@ -50,7 +51,7 @@ double oldaax = 0;
 double oldaay = 0;
 double oldaaz = 0;
 double oldypr[3];
-
+lyncs::RoverMotor rover_motor = lyncs::RoverMotor();
 double aax;
 double aay;
 double aaz;
@@ -157,6 +158,7 @@ long TIMET1 = 0;
 long TIMET2 = 0;
 
 double v00;
+	/* data */
 double vp = 0;
 double center = 0;
 double centerold = 0;
@@ -265,10 +267,7 @@ void setup()
 
   TCCR1B &= B11111000;
   TCCR1B |= B00000001;
-  pinMode(OutR1, OUTPUT);
-  pinMode(OutR2, OUTPUT);
-  pinMode(OutL1, OUTPUT);
-  pinMode(OutL2, OUTPUT);
+  rover_motor.Init();
   pinMode( echoPin, INPUT );
   pinMode( trigPin, OUTPUT );
   Wire.begin();
@@ -449,10 +448,7 @@ void loop()
   //通信系
   if (cspi1 == cspi2) {
     while (cspi1 == 1) {
-      digitalWrite(OutR1, LOW);
-      analogWrite(OutR2, 0);
-      digitalWrite(OutL1, LOW);
-      analogWrite(OutL2, 0);
+		rover_motor.RoverOutput(0,0);
       Serial.println("END");
       delay(100000);
     }
@@ -579,21 +575,13 @@ void flypower(double outV, double outT ) {
   int outL;
   if (outT >= 0) {
     outR = (outT+outV) * 255;
-    digitalWrite(OutR1, LOW);
-    analogWrite(OutR2, outR);
-
     outL = outV * 255;
-    digitalWrite(OutL1, LOW);
-    analogWrite(OutL2, outL);
+	rover_motor.RoverOutput(outR,outL);
   }
   if (outT < 0) {
     outR = outV * 255;
-    digitalWrite(OutR1, LOW);
-    analogWrite(OutR2, outR);
-
     outL = (outV-outT) * 255;
-    digitalWrite(OutL1, LOW);
-    analogWrite(OutL2, outL);
+	rover_motor.RoverOutput(outR,outL);
   }
 
 }
