@@ -3,7 +3,6 @@
 #include <Wire.h>
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps20.h"
-#include "local_libs/Matrix.h"
 #include "local_libs/RoverMotor.h"
 
 #define bv 0.05745024
@@ -99,7 +98,8 @@ VectorInt16 aaWorld;
 VectorFloat gravity; // [x, y, z]      gravity vector
 VectorInt16 gyro;	// [x, y, z]      gravity vector
 float ypr[3];
-lyncs::Matrix<double, 3, 3> rotation_matrix = {{{0, 0, 0}, {0, 0, 0}, {0, 0, 0}}};
+double A[3][4];
+double buffer1[3][3];
 double y0;
 double y1;
 double y2;
@@ -108,6 +108,7 @@ void dmpDataReady()
 {
 	mpuInterrupt = true;
 }
+void cal1(double f[3][3], double g[3][3]);
 void cleenarray3(double array[], double newdata);
 double pid(double array[], const double a_m, const double proportion_gain, const double integral_gain, const double differential_gain, const double delta_T);
 double pid_a(double array[], const double a_m, const double proportion_gain);
@@ -257,11 +258,11 @@ void loop()
 		y1 = (-1) * ypr[1];
 		y2 = ypr[2];
 
-		GetRotationMatrix(rotation_matrix, (double)y0, (double)y1, (double)y2);
+		getkgl((double)y0, (double)y1, (double)y2);
 
-		long int intaax = (long int)(aa.x /7.6);
-		long int intaay = (long int)(aa.y /8.0);
-		long int intaaz = (long int)(aa.z /10.2);
+		long int intaax = (long int)(aa.x / 7.6);
+		long int intaay = (long int)(aa.y / 8.0);
+		long int intaaz = (long int)(aa.z / 10.2);
 
 		intypr[0] = (long int)(ypr[0] * 1000);
 		intypr[1] = (long int)(ypr[1] * 1000);
@@ -273,7 +274,7 @@ void loop()
 		aaxT *= 0.000000001;
 		aayT *= 0.000000001;
 		aazT *= 0.000000001;
-		vz = rotation_matrix.GetElement(2, 0) * aaxT + rotation_matrix.GetElement(2, 1) * aayT + rotation_matrix.GetElement(2, 2) * aazT;
+		vz = A[2][0] * aaxT + A[2][1] * aayT + A[2][2] * aazT;
 
 		double delta_time = TimeUpdate() / 1000000;
 		rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
@@ -415,11 +416,34 @@ double TimeUpdate()
 	previous_time = temp_time;
 	return return_time;
 }
-
-void GetRotationMatrix(lyncs::Matrix<double, 3, 3> &rotation_matrix, const double psi, const double phi, const double theta)
+void cal1(double f[3][3], double g[3][3])
 {
-	lyncs::Matrix<double, 3, 3> R_roll_theta = {{{1, 0, 0}, {0, cos(theta), -1 * sin(theta)}, {0, sin(theta), cos(theta)}}};
-	lyncs::Matrix<double, 3, 3> R_pitch_phi = {{{cos(phi), 0, sin(phi)}, {0, 1, 0}, {-sin(phi), 0, cos(phi)}}};
-	lyncs::Matrix<double, 3, 3> R_yaw_psi = {{{cos(psi), -1 * sin(psi), 0}, {sin(psi), cos(psi), 0}, {0, 0, 1}}};
-	rotation_matrix = (R_yaw_psi * R_pitch_phi) * R_roll_theta;
+  int i;
+  int j;
+  int t;
+  for ( i = 0; i < 3; ++i) {
+    for ( j = 0; j < 3; ++j) {
+      A[i][j] = 0;
+      for ( t = 0; t < 3; ++t) {
+        A[i][j] += f[i][t] * g[t][j];
+      }
+    }
+  }
+}
+void getkgl(double f, double e, double d)
+{
+  double a[3][3] = {{1, 0, 0}, {0, cos(d), -1 * sin(d)}, {0, sin(d), cos(d)}};
+  double b[3][3] = {{cos(e), 0, sin(e)}, {0, 1, 0}, { -sin(e), 0, cos(e)}};
+  double c[3][3] = {{cos(f), -1 * sin(f), 0}, {sin(f), cos(f), 0}, {0, 0, 1}};
+  double i;
+  double r;
+  cal1(c, b);
+  for (int s = 0; s < 3; s++)
+  {
+    for (int f = 0; f < 3; f++)
+    {
+      buffer1[s][f] = A[s][f];
+    }
+  }
+  cal1(buffer1, a);
 }
