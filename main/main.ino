@@ -32,8 +32,6 @@ double aaxT;
 double aayT;
 double aazT;
 
-double vx;
-double vy;
 double vz;
 double vn;
 double vn1 = 0;
@@ -50,30 +48,13 @@ double gzzz;
 double gzz0;
 double gztank = 0;
 double countx;
-double vkx;
-double power;
-double power_a[3];
-double vky;
 double vkz;
-double l;
-double q_m;
-double kx_a[3];
 double kxa_a[3];
-double ky_a[3];
 double kya_a[3];
 double kz_a[3];
-double kza_a[3];
 double kv_a[3];
-double l_a[3];
 double gy[3];
-double hv[2];
 double gyv[3];
-double zn[3][3];
-double buffer1[3][3];
-double ppp = 0;
-double ipp = 250;
-double dpp = 0; //ppp=1000で１０度22ぐらむ
-int ppp1;
 int land = 0;
 int Alltimer1 = 0;
 int Alltimer2;
@@ -82,29 +63,17 @@ long TIMET2 = 0;
 
 double v00;
 /* data */
-double vp = 0;
 double center = 0;
 double centerold = 0;
 double ptx = 0;
-double ptxold = 0;
 double pty = 0;
 double ptyold = 0;
-double ptz = 0;
-double ptzold = 0;
-double BPP = 520;
 
 double oldReal = 0;
-double kxa_m;
-double kya_m;
-int knt;
 int fpga = 0;
-int asd = 100;
-int asg = 100;
 char buf[100];
 int country = 0;
 int coucou = 0;
-int w = 0;
-int e;
 int spi1;
 int spi2;
 int spi3;
@@ -115,7 +84,6 @@ int spi7;
 int spi8;
 unsigned char cspi1;
 unsigned char cspi2;
-unsigned char c;
 volatile byte pos;
 volatile boolean process_it;
 bool dmpReady = false;  // set true if DMP init was successful
@@ -143,8 +111,6 @@ void dmpDataReady()
 void cleenarray3(double array[], double newdata);
 double pid(double array[], const double a_m, const double proportion_gain, const double integral_gain, const double differential_gain, const double delta_T);
 double pid_a(double array[], const double a_m, const double proportion_gain);
-void change(double, double, double, double);
-void pidh(double array[], double a_m, double PB, double DT, double Td, double T);
 double TimeUpdate(); //前回この関数が呼ばれてからの時間 us単位
 void flypower(double outr, double outl);
 void cmpid(double array[], double a_m, double PB, double DT, double Td, double T);
@@ -205,9 +171,7 @@ void setup()
 		x = 0.0000000001;
 		y = 0.0000000001;
 		z = 0.0000000001;
-		cleenarray3(kx_a, x);
 		cleenarray3(kxa_a, x);
-		cleenarray3(ky_a, y);
 		cleenarray3(kz_a, z);
 	}
 	pinMode(MISO, OUTPUT);
@@ -309,13 +273,10 @@ void loop()
 		aaxT *= 0.000000001;
 		aayT *= 0.000000001;
 		aazT *= 0.000000001;
-		vx = rotation_matrix.GetElement(0, 0) * aaxT + rotation_matrix.GetElement(0, 1) * aayT + rotation_matrix.GetElement(0, 2) * aazT;
-		vy = rotation_matrix.GetElement(1, 0) * aaxT + rotation_matrix.GetElement(1, 1) * aayT + rotation_matrix.GetElement(1, 2) * aazT;
 		vz = rotation_matrix.GetElement(2, 0) * aaxT + rotation_matrix.GetElement(2, 1) * aayT + rotation_matrix.GetElement(2, 2) * aazT;
 
 		double delta_time = TimeUpdate() / 1000000;
 		rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
-		//vn = rvn;
 		vn = (rvn * we - rvn2 * we - (delta_time / 2 * wh - 1) * (we - 2 / delta_time) * vn2 - ((delta_time / 2 * wh - 1) * (2 / delta_time + we) + (we - 2 / delta_time) * (1 + delta_time / 2 * wh)) * vn1) / (1 + delta_time / 2 * wh) / (2 / delta_time + we);
 		vn2 = vn1;
 		vn1 = vn;
@@ -335,8 +296,6 @@ void loop()
 
 		vh = 0.1 * vh + 0.9 * oldr;
 		oldr = vh;
-
-		// calman(vn, vh, TIME / 1000000);
 	}
 
 	gzz0 = gy[0];
@@ -368,11 +327,6 @@ void loop()
 	center = center * 0.2 + centerold * 0.8;
 	centerold = center;
 
-	/*if (spi5 == spi6) {
-    ptx = (double)spi5 * MaxA / 1000 / 180 * 3.14;
-    ptx = ptx * 0.05 + ptxold * 0.95;
-    ptxold = ptx;
-  }*/
 	if (spi5 == spi6)
 	{
 		ptx = (double)spi5 * 0.001;
@@ -384,8 +338,6 @@ void loop()
 		ptyold = pty;
 	}
 
-	cleenarray3(kx_a, gyv[0]);
-	cleenarray3(ky_a, gyv[1]);
 	cleenarray3(kz_a, gyv[2]);
 	cleenarray3(kv_a, vn - v00);
 
@@ -466,7 +418,6 @@ double TimeUpdate()
 
 void GetRotationMatrix(lyncs::Matrix<double, 3, 3> &rotation_matrix, const double psi, const double phi, const double theta)
 {
-	double buffer1[3][3];
 	lyncs::Matrix<double, 3, 3> R_roll_theta = {{{1, 0, 0}, {0, cos(theta), -1 * sin(theta)}, {0, sin(theta), cos(theta)}}};
 	lyncs::Matrix<double, 3, 3> R_pitch_phi = {{{cos(phi), 0, sin(phi)}, {0, 1, 0}, {-sin(phi), 0, cos(phi)}}};
 	lyncs::Matrix<double, 3, 3> R_yaw_psi = {{{cos(psi), -1 * sin(psi), 0}, {sin(psi), cos(psi), 0}, {0, 0, 1}}};
