@@ -112,7 +112,6 @@ double vn2 = 0;
 double rvn;
 double rvn1 = 0;
 double rvn2 = 0;
-double TIMEr;
 double we = 1600;
 double wh = 2;
 
@@ -216,9 +215,6 @@ double vv;
 double y0;
 double y1;
 double y2;
-double timetime1 = 0;
-double timetime2 = 0;
-double TIME;
 volatile bool mpuInterrupt = false;   // indicates whether MPU interrupt pin has gone high
 void dmpDataReady() {
   mpuInterrupt = true;
@@ -230,6 +226,7 @@ void pidz(double array[], double a_m, double PB, double DT, double Td, double T)
 void pidy_a(double , double , double , double , double , double );
 void change(double, double, double, double);
 void pidh(double array[], double a_m, double PB, double DT, double Td, double T);
+double TimeUpdate(); //前回この関数が呼ばれてからの時間 us単位
 void flypower(double outr, double outl);
 void getrp(double, double);
 void cmpid(double array[], double a_m, double PB, double DT, double Td, double T);
@@ -409,13 +406,11 @@ void loop()
     vx = rotation_matrix.GetElement(0,0) * aaxT +  rotation_matrix.GetElement(0,1)* aayT + rotation_matrix.GetElement(0,2) * aazT;
     vy = rotation_matrix.GetElement(1,0) * aaxT + rotation_matrix.GetElement(1,1) * aayT + rotation_matrix.GetElement(1,2) * aazT;
     vz = rotation_matrix.GetElement(2,0) * aaxT + rotation_matrix.GetElement(2,1) * aayT + rotation_matrix.GetElement(2,2) * aazT;
-    timetime2 = micros();
-    TIME = timetime2 - timetime1;
-    timetime1 = timetime2;
-    rvn = rvn1 + (vz - 1) * 9.8 * TIME / 1000000;
-    TIMEr = TIME / 1000000;
+    
+	double delta_time = TimeUpdate()/1000000;
+    rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
     //vn = rvn;
-    vn = (rvn * we - rvn2 * we - (TIMEr / 2 * wh - 1) * (we - 2 / TIMEr) * vn2 - ((TIMEr / 2 * wh - 1) * (2 / TIMEr + we) + (we - 2 / TIMEr) * (1 + TIMEr / 2 * wh)) * vn1 ) / (1 + TIMEr / 2 * wh) / (2 / TIMEr + we);
+    vn = (rvn * we - rvn2 * we - (delta_time / 2 * wh - 1) * (we - 2 / delta_time) * vn2 - ((delta_time / 2 * wh - 1) * (2 / delta_time + we) + (we - 2 / delta_time) * (1 + delta_time / 2 * wh)) * vn1 ) / (1 + delta_time / 2 * wh) / (2 / delta_time + we);
     vn2 = vn1;
     vn1 = vn;
     rvn2 = rvn1;
@@ -621,6 +616,15 @@ void getrp(double a, double b) {
   kxa_m = ro;
   kya_m = pic;
 }
+double TimeUpdate()
+{
+	static double previous_time = micros(); //前回この関数が呼ばれた時間
+	double temp_time = micros();
+	double return_time = temp_time - previous_time;
+	previous_time = temp_time;
+	return return_time;
+}
+
 void GetRotationMatrix(lyncs::Matrix<double, 3, 3> &rotation_matrix, const double psi, const double phi, const double theta)
 {
 	double buffer1[3][3];
