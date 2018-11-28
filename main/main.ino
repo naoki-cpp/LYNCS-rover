@@ -97,6 +97,11 @@ VectorInt16 aaReal; // [x, y, z]            重力を除いた加速度センサ
 VectorInt16 aaWorld;
 VectorFloat gravity; // [x, y, z]      gravity vector
 VectorInt16 gyro;	// [x, y, z]      gravity vector
+enum YawPitchRoll{
+	kYaw = 0,
+	kPitch,
+	kRoll
+};
 float ypr[3];
 double A[3][4];
 double buffer1[3][3];
@@ -247,16 +252,16 @@ void loop()
       Serial.print(gyv[1]);
       Serial.print("\t");
       Serial.println(gyv[2]);*/
-		gy[0] = (double)ypr[0];
-		gy[1] = (double)ypr[1];
-		gy[2] = (double)ypr[2];
+		gy[0] = (double)ypr[kYaw];
+		gy[1] = (double)ypr[kPitch];
+		gy[2] = (double)ypr[kRoll];
 		mpu.dmpGetGyro(&gyro, fifoBuffer);
 		gyv[0] = (double)gyro.x;
 		gyv[1] = (double)gyro.y;
 		gyv[2] = (double)gyro.z;
-		y0 = (-1) * ypr[0];
-		y1 = (-1) * ypr[1];
-		y2 = ypr[2];
+		y0 = (-1) * ypr[kYaw];
+		y1 = (-1) * ypr[kPitch];
+		y2 = ypr[kRoll];
 
 		getkgl((double)y0, (double)y1, (double)y2);
 
@@ -264,9 +269,9 @@ void loop()
 		long int intaay = (long int)(aa.y / 8.0);
 		long int intaaz = (long int)(aa.z / 10.2);
 
-		intypr[0] = (long int)(ypr[0] * 1000);
-		intypr[1] = (long int)(ypr[1] * 1000);
-		intypr[2] = (long int)(ypr[2] * 1000);
+		intypr[kYaw] = (long int)(ypr[kYaw] * 1000);
+		intypr[kPitch] = (long int)(ypr[kPitch] * 1000);
+		intypr[kRoll] = (long int)(ypr[kRoll] * 1000);
 
 		aaxT = (double)((-1) * intypr[0] * 1000 + 930 * intypr[1] * 1000 + 3 * intypr[2] * 1000 + 3 * intypr[1] * intypr[1] + (-4) * intypr[2] * intypr[2] + 10 * intypr[0] * intypr[1] + 4 * intypr[1] * intypr[2] + 3 * intypr[0] * intypr[2] + 10 * intaax * 1000);
 		aayT = (double)(9 * intypr[0] * 1000 + (-20) * intypr[1] * 1000 + 940 * intypr[2] * 1000 + (-40) * intypr[1] * intypr[1] + (-30) * intypr[2] * intypr[2] + 30 * intypr[0] * intypr[1] + 40 * intypr[1] * intypr[2] + (-30) * intypr[0] * intypr[2] + 7 * intaay * 1000);
