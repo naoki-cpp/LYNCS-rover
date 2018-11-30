@@ -1,9 +1,9 @@
 #include <math.h>
 #include <SPI.h>
 #include <Wire.h>
-#include "I2Cdev.h"
-#include "MPU6050_6Axis_MotionApps20.h"
-#include "local_libs/RoverMotor.h"
+#include <I2Cdev.h>
+#include <MPU6050_6Axis_MotionApps20.h>
+#include "./local_libs/RoverMotor.h"
 
 #define bv 0.05745024
 #define cv 0.009521774
