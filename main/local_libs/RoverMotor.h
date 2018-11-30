@@ -10,11 +10,11 @@ class RoverMotor
 	const unsigned int kOutR2_;
 	const unsigned int kOutL1_;
 	const unsigned int kOutL2_;
-
+	void RoverOutput(uint8_t outR,uint8_t outL);
   public:
 	RoverMotor();
 	~RoverMotor();
 	void Init();
-	void RoverOutput(uint8_t outR,uint8_t outL);
+	void RoverPower(double outV,double outT);
 };
 } // namespace lyncs
