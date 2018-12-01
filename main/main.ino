@@ -215,22 +215,10 @@ void loop()
 		mpu.dmpGetAccel(&aa, fifoBuffer);
 		mpu.dmpGetGravity(&gravity, &q);
 		mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-<<<<<<< HEAD
-		/* Serial.print("ypr\t");
-      Serial.print(gyv[0]);
-      Serial.print("\t");
-      Serial.print(gyv[1]);
-      Serial.print("\t");
-      Serial.println(gyv[2]);*/
-		gy[0] = (double)ypr[kYaw];
-		gy[1] = (double)ypr[kPitch];
-		gy[2] = (double)ypr[kRoll];
-=======
 		
-		gy[0] = (double)ypr[0];
-		gy[1] = (double)ypr[1];
-		gy[2] = (double)ypr[2];
->>>>>>> 856a9e65baff02992ffe603ae8ce2215ef15a71a
+		gy[kYaw] = (double)ypr[kYaw];
+		gy[kPitch] = (double)ypr[kPitch];
+		gy[kRoll] = (double)ypr[kRoll];
 		mpu.dmpGetGyro(&gyro, fifoBuffer);
 		gyv[0] = (double)gyro.x;
 		gyv[1] = (double)gyro.y;
