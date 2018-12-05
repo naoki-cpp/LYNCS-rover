@@ -4,9 +4,8 @@
 #include <I2Cdev.h>
 #include <MPU6050_6Axis_MotionApps20.h>
 #include "./local_libs/RoverMotor.h"
+#include "./PinDefinitions.h"
 
-#define echoPin 13 // Echo Pin
-#define trigPin 7  // Trigger Pin
 #define MaxC 1 // per sec
 #define MaxA 1
 
@@ -113,8 +112,6 @@ void setup()
 	TCCR1B &= B11111000;
 	TCCR1B |= B00000001;
 	rover_motor.Init();
-	pinMode(echoPin, INPUT);
-	pinMode(trigPin, OUTPUT);
 	Wire.begin();
 	Wire.setClock(400000L);
 	Serial.begin(115200);
@@ -130,7 +127,7 @@ void setup()
 	if (devStatus == 0)
 	{
 		mpu.setDMPEnabled(true);
-		attachInterrupt(2, dmpDataReady, RISING);
+		attachInterrupt(MPU_INTERRUPT_PIN, dmpDataReady, RISING);
 		mpuIntStatus = mpu.getIntStatus();
 		dmpReady = true;
 		packetSize = mpu.dmpGetFIFOPacketSize();
