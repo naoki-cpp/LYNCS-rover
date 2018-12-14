@@ -1,16 +1,14 @@
 #pragma once
-#include <Arduino.h>
+#include <Servo.h>
 namespace lyncs
 {
 
 class RoverMotor
 {
   private:
-	const unsigned int kOutR1_;
-	const unsigned int kOutR2_;
-	const unsigned int kOutL1_;
-	const unsigned int kOutL2_;
-	void RoverOutput(uint8_t outR,uint8_t outL);
+	Servo servo_right_;
+	Servo servo_left_;
+	void RoverOutput(double outR,double outL);
   public:
 	RoverMotor();
 	~RoverMotor();

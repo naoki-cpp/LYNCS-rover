@@ -6,10 +6,8 @@ Naoki Yano
 ===========================================*/
 #pragma once
 
-#define ROVERMOTOR_RIGHT_1 5
-#define ROVERMOTOR_RIGHT_2 6
-#define ROVERMOTOR_LEFT_1 9
-#define ROVERMOTOR_LEFT_2 10
+#define ROVERMOTOR_RIGHT 5
+#define ROVERMOTOR_LEFT 9
 
 #define MPU_INTERRUPT_PIN 2
 
