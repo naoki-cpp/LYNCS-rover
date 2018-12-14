@@ -10,7 +10,7 @@
 #define MaxC 1 // per sec
 #define MaxA 1
 
-lyncs::LowPass vh(0.1);
+lyncs::LowPass<double> vh(0.1);
 double realaccel;
 
 lyncs::RoverMotor rover_motor = lyncs::RoverMotor();
@@ -44,9 +44,9 @@ double gyv[3];
 
 double v00;
 /* data */
-lyncs::LowPass center(0.2);
+lyncs::LowPass<double> center(0.2);
 double ptx = 0;
-lyncs::LowPass pty(0.05);
+lyncs::LowPass<double> pty(0.05);
 
 char buf[100];
 int spi1;
