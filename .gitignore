@@ -1,3 +1,8 @@
+# for  Macintosh
+*.DS_Store
+*._*
+__pycache__
+
 #for Visual Studio Code
 *.json
 
