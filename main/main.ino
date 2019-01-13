@@ -4,8 +4,10 @@
 #include <I2Cdev.h>
 #include <MPU6050_6Axis_MotionApps20.h>
 #include "./local_libs/RoverMotor.h"
+#include "./local_libs/Matrix.h"
 #include "./local_libs/LowPass.h"
 #include "./PinDefinitions.h"
+
 
 #define MaxC 1 // per sec
 #define MaxA 1
@@ -14,6 +16,7 @@ lyncs::LowPass<double> vh(0.1);
 double realaccel;
 
 lyncs::RoverMotor rover_motor = lyncs::RoverMotor();
+lyncs::Matrix<double,3,3> rotation_matrix = lyncs::Matrix<double,3,3>();
 long int intypr[3];
 double aaxT;
 double aayT;
@@ -233,7 +236,7 @@ void loop()
 		aaxT *= 0.000000001;
 		aayT *= 0.000000001;
 		aazT *= 0.000000001;
-		vz = A[2][0] * aaxT + A[2][1] * aayT + A[2][2] * aazT;
+		vz = rotation_matrix.GetElement(2,0) * aaxT +  rotation_matrix.GetElement(2,1)* aayT + rotation_matrix.GetElement(2,2) * aazT;
 
 		double delta_time = TimeUpdate() / 1000000;
 		rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
@@ -332,34 +335,10 @@ double TimeUpdate()
 	previous_time = temp_time;
 	return return_time;
 }
-void cal1(double f[3][3], double g[3][3])
-{
-  int i;
-  int j;
-  int t;
-  for ( i = 0; i < 3; ++i) {
-    for ( j = 0; j < 3; ++j) {
-      A[i][j] = 0;
-      for ( t = 0; t < 3; ++t) {
-        A[i][j] += f[i][t] * g[t][j];
-      }
-    }
-  }
-}
 void getkgl(double f, double e, double d)
 {
-  double a[3][3] = {{1, 0, 0}, {0, cos(d), -1 * sin(d)}, {0, sin(d), cos(d)}};
-  double b[3][3] = {{cos(e), 0, sin(e)}, {0, 1, 0}, { -sin(e), 0, cos(e)}};
-  double c[3][3] = {{cos(f), -1 * sin(f), 0}, {sin(f), cos(f), 0}, {0, 0, 1}};
-  double i;
-  double r;
-  cal1(c, b);
-  for (int s = 0; s < 3; s++)
-  {
-    for (int f = 0; f < 3; f++)
-    {
-      buffer1[s][f] = A[s][f];
-    }
-  }
-  cal1(buffer1, a);
+  lyncs::Matrix<double,3,3> Rd = {{{1, 0, 0}, {0, cos(d), -1 * sin(d)}, {0, sin(d), cos(d)}}};
+  lyncs::Matrix<double,3,3> Re = {{{cos(e), 0, sin(e)}, {0, 1, 0}, { -sin(e), 0, cos(e)}}};
+  lyncs::Matrix<double,3,3> Rf = {{{cos(f), -1 * sin(f), 0}, {sin(f), cos(f), 0}, {0, 0, 1}}};
+  rotation_matrix = Rd*Rf*Re;
 }
