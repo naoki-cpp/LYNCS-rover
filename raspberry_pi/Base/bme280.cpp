@@ -1,47 +1,4 @@
-/***************************************************************************
-Modified BSD License
-====================
-Copyright © 2016, Andrei Vainik
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright
-   notice, this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-   notice, this list of conditions and the following disclaimer in the
-   documentation and/or other materials provided with the distribution.
-3. Neither the name of the organization nor the
-   names of its contributors may be used to endorse or promote products
-   derived from this software without specific prior written permission.
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL COPYRIGHT HOLDER BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-This piece of code was combined from several sources
-https://github.com/adafruit/Adafruit_BME280_Library
-https://cdn-shop.adafruit.com/datasheets/BST-BME280_DS001-10.pdf
-https://projects.drogon.net/raspberry-pi/wiringpi/i2c-library/
-Compensation functions and altitude function originally from:
-https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.cpp
-***************************************************************************
-  This is a library for the BME280 humidity, temperature & pressure sensor
-  Designed specifically to work with the Adafruit BME280 Breakout
-  ----> http://www.adafruit.com/products/2650
-  These sensors use I2C or SPI to communicate, 2 or 4 pins are required
-  to interface.
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit andopen-source hardware by purchasing products
-  from Adafruit!
-  Written by Limor Fried & Kevin Townsend for Adafruit Industries.
-  BSD license, all text above must be included in any redistribution
- ***************************************************************************
-****************************************************************************/
+#include <pybind11/pybind11.h>
 
 #include <stdio.h>
 #include<stdint.h>
@@ -59,8 +16,12 @@ https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.
 #include <linux/spi/spidev.h>
 #include <time.h>
 #include "bme280.h"
+#include "Csearch.h"
+#include "CalculateCsearch.h"
 
 #define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+void readCalibrationData(int fd, bme280_calib_data *data) ;
 
 int v;
 double a1;
@@ -69,15 +30,13 @@ double TIME;
 double TIME2;
 double TIME1;
 
-
-
 static void pabort(const char *s)
 {
 	perror(s);
 	abort();
 }
 
-static const char *device = "/dev/spidev0.0";
+static const char *device = "/dev/spidev1.2";
 static uint8_t mode;
 static uint8_t bits = 8;
 static uint32_t speed = 500000;
@@ -226,7 +185,6 @@ void getRawData(int fd, bme280_raw_data *raw) {
   raw->temperature = (raw->temperature | raw->tmsb) << 8;
   raw->temperature = (raw->temperature | raw->tlsb) << 8;
   raw->temperature = (raw->temperature | raw->txsb) >> 4;
-
   raw->pressure = 0;
   raw->pressure = (raw->pressure | raw->pmsb) << 8;
   raw->pressure = (raw->pressure | raw->plsb) << 8;
@@ -248,157 +206,57 @@ float getAltitude(float pressure) {
   return 44330.0 * (1.0 - pow(pressure / MEAN_SEA_LEVEL_PRESSURE, 0.190294957));
 }
 
-static void transfer(int fd,int e,int f,int x,int y,int z,int x1,int y1,int z1,unsigned char bob,unsigned char coc)
+void ByteTranslation(unsigned char x_separated[5],int x)
+{
+	const unsigned int char_size = 8;
+	unsigned int hash = 0;
+	for (int i = 0; i < 4; i++)
+	{
+		x_separated[i] = ((x >> char_size * i) & 0xFF);
+		hash += x_separated[i];
+	}
+	x_separated[4] = (unsigned char)(hash % 256);
+}
+
+static void transfer(int fd, int angle, unsigned char order)
 {
 	int ret;
-	unsigned int a;
-	unsigned int b;
-	unsigned int xx;
-	unsigned int yy;
-	unsigned int zz;
-	unsigned int xxx;
-	unsigned int yyy;
-	unsigned int zzz;
-	unsigned int g;
-	unsigned int h;
-	unsigned int xx1;
-	unsigned int yy1;
-	unsigned int zz1;
-	unsigned int xxx1;
-	unsigned int yyy1;
-	unsigned int zzz1;
-	unsigned char c[4];
-	unsigned char d[4];
-	unsigned char xx2[4];
-	unsigned char yy2[4];
-	unsigned char zz2[4];
-	unsigned char xxx2[4];
-	unsigned char yyy2[4];
-	unsigned char zzz2[4];
-	a=(unsigned int)e;
-	b=(unsigned int)f;
-	xx=(unsigned int)x;
-	yy=(unsigned int)y;
-	zz=(unsigned int)z;
-	xxx=(unsigned int)x1;
-	yyy=(unsigned int)y1;
-	zzz=(unsigned int)z1;
-	c[0]=(unsigned char)(a%256);
-	g=a/256;
-	d[0]=(unsigned char)(b%256);
-	h=b/256;
-	xx2[0]=(unsigned char)(xx%256);
-	xx1=xx/256;
-	yy2[0]=(unsigned char)(yy%256);
-	yy1=yy/256;
-	zz2[0]=(unsigned char)(zz%256);
-	zz1=zz/256;
-	xxx2[0]=(unsigned char)(xxx%256);
-	xxx1=xxx/256;
-	yyy2[0]=(unsigned char)(yyy%256);
-	yyy1=yyy/256;
-	zzz2[0]=(unsigned char)(zzz%256);
-	zzz1=zzz/256;
-	c[1]=(unsigned char)(g%256);
-	g=g/256;
-	d[1]=(unsigned char)(h%256);
-	h=h/256;
+	unsigned char angle_transe[5];
+	ByteTranslation(angle_transe, angle);
 
-	xx2[1]=(unsigned char)(xx1%256);
-	xx1=xx1/256;
-	yy2[1]=(unsigned char)(yy1%256);
-	yy1=yy1/256;
-	zz2[1]=(unsigned char)(zz1%256);
-	zz1=zz1/256;
-	xxx2[1]=(unsigned char)(xxx1%256);
-	xxx1=xxx1/256;
-	yyy2[1]=(unsigned char)(yyy1%256);
-	yyy1=yyy1/256;
-	zzz2[1]=(unsigned char)(zzz1%256);
-	zzz1=zzz1/256;
-
-	c[2]=(unsigned char)(g%256);
-	g=g/256;
-	d[2]=(unsigned char)(h%256);
-	h=h/256;
-	xx2[2]=(unsigned char)(xx1%256);
-	xx1=xx1/256;
-	yy2[2]=(unsigned char)(yy1%256);
-	yy1=yy1/256;
-	zz2[2]=(unsigned char)(zz1%256);
-	zz1=zz1/256;
-	xxx2[2]=(unsigned char)(xxx1%256);
-	xxx1=xxx1/256;
-	yyy2[2]=(unsigned char)(yyy1%256);
-	yyy1=yyy1/256;
-	zzz2[2]=(unsigned char)(zzz1%256);
-	zzz1=zzz1/256;
-	c[3]=(unsigned char)(g%256);
-	g=g/256;
-	d[3]=(unsigned char)(h%256);
-	h=h/256;
-	xx2[3]=(unsigned char)(xx1%256);
-	xx1=xx1/256;
-	yy2[3]=(unsigned char)(yy1%256);
-	yy1=yy1/256;
-	zz2[3]=(unsigned char)(zz1%256);
-	zz1=zz1/256;
-	xxx2[3]=(unsigned char)(xxx1%256);
-	xxx1=xxx1/256;
-	yyy2[3]=(unsigned char)(yyy1%256);
-	yyy1=yyy1/256;
-	zzz2[3]=(unsigned char)(zzz1%256);
-	zzz1=zzz1/256;
 	uint8_t tx[] = {
-		c[0],c[1],c[2],c[3],
-		d[0],d[1],d[2],d[3],
-		xx2[0],xx2[1],xx2[2],xx2[3],
-		yy2[0],yy2[1],yy2[2],yy2[3],
-		zz2[0],zz2[1],zz2[2],zz2[3],
-		xxx2[0],xxx2[1],xxx2[2],xxx2[3],
-		yyy2[0],yy2[1],yyy2[2],yyy2[3],
-		zzz2[0],zzz2[1],zzz2[2],zzz2[3],
-		bob,coc,
-        0x0A
+		angle_transe[0], angle_transe[1], angle_transe[2], angle_transe[3], angle_transe[3],
+		order,order,
+		0x0A};
+	uint8_t rx[ARRAY_SIZE(tx)] = {
+		0,
 	};
-	uint8_t rx[ARRAY_SIZE(tx)] = {0, };
 	struct spi_ioc_transfer tr = {
 		.tx_buf = (unsigned long)tx,
 		.rx_buf = (unsigned long)rx,
 		.len = ARRAY_SIZE(tx),
-		.delay_usecs = delay,
 		.speed_hz = speed,
-		.bits_per_word = bits,
+		.delay_usecs = delay,
+		.bits_per_word = bits
 	};
 
 	ret = ioctl(fd, SPI_IOC_MESSAGE(1), &tr);
 	if (ret < 1)
 		pabort("can't send spi message");
-
-    /*
-	for (ret = 0; ret < ARRAY_SIZE(tx); ret++) {
-		if (!(ret % 6))
-			puts("");
-		printf("%.2X ", rx[ret]);
-	}
-	puts("");
-    */
 }
-void trns(int j1,int j2,int j3,int j4,int j5,int j6,unsigned char s1,unsigned char s2)
+
+
+void trns(int angle, unsigned char order)
 {
-	int ret = 0;
-	int fd;
-
-
-
-	fd = open(device, O_RDWR);
-	if (fd < 0)
+	int fd = open(device, O_RDWR);
+	if (fd < 0){
 		pabort("can't open device");
+	}
 
 	/*
 	 * spi mode
 	 */
-	ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
+	int ret = ioctl(fd, SPI_IOC_WR_MODE, &mode);
 	if (ret == -1)
 		pabort("can't set spi mode");
 
@@ -430,14 +288,62 @@ void trns(int j1,int j2,int j3,int j4,int j5,int j6,unsigned char s1,unsigned ch
 
     geta();
 
-
-
-	transfer(fd,j1,j2,j3,j4,j5,j6,v,v,s1,s2);
-  //	usleep(100000); //上も変えよう
-
-
+	transfer(fd,angle, order);
 
 	close(fd);
+}
 
+void Csearch1()
+{
+	char judgei;
+	char k = 0;
+	double xy[2];
 
+	while (k<4) {
+		judgei=Csearch(80,40,80,40,xy);
+		if(judgei==2&&judgei==3){
+			trns(0,1);
+
+			break;
+		}
+		if(judgei==2){
+			break;
+		}
+
+		k++;
+	}
+
+}
+
+void Csearch2()
+{
+	char judgei;
+	char k = 0;
+	double answer;
+	double xy[2];
+
+	while (k<4) {
+		judgei=Csearch(10,0,180,140,xy);
+		if(judgei==2){
+			answer=ConvertCoordinateToAngle(xy)*1000;
+			trns((int)answer,4);
+			break;
+		}
+		if(judgei==0){
+			trns(0,2);
+			break;
+		}
+		if(judgei==3){
+			trns(0,3);
+			break;
+		}
+
+		k++;
+	}
+
+}
+
+PYBIND11_MODULE(bme280, m) {
+    m.doc() = "pybind11 example plugin";
+    m.def("trns", &trns, "A function which transmits values to Arduino micro");
 }

@@ -1,9 +1,12 @@
-# for  Macintosh
+#CMake cache
+build
+
+# For  Macintosh
 *.DS_Store
 *._*
 __pycache__
 
-#for Visual Studio Code
+#For Visual Studio Code
 *.json
 
 # Prerequisites

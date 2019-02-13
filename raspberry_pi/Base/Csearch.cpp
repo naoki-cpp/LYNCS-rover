@@ -1,5 +1,5 @@
+#include <iostream>
 #include </usr/local/include/opencv2/opencv.hpp>
-
 #include </usr/local/include/opencv2/core.hpp>
 #include </usr/local/include/opencv2/imgproc.hpp>
 #include </usr/local/include/opencv2/highgui.hpp>
@@ -10,36 +10,45 @@
 #define S_MAX 255
 #define S_MIN 40
 #define V_MAX 255
-#define V_MIN 100
+#define V_MIN 40
 
 using namespace std;
 using namespace cv;
 
-int main(void){
+int Csearch(unsigned char R,unsigned char G, unsigned char B,double coordinate[2]){
   VideoCapture cap(0);
+  cv::Mat inputdata;
+
   if(!cap.isOpened())  // 成功したかどうかをチェック
           return -1;
   cap.set(3, 320);
   cap.set(4, 240);
 
 
-   //Mat inputdata = imread("image1.jpg", CV_LOAD_IMAGE_COLOR);
-   Mat inputdata;
 
-   cap >> inputdata;
+
+  cap >> inputdata;
+    if (inputdata.empty()){
+    cout << "end0" << endl;
+      return(1);
+    }
+
+  //imshow("result",inputdata );
+  imwrite("work1.jpg",inputdata );
+  waitKey(1000);
+
+
+
    if (inputdata.empty()){
    cout << "end0" << endl;
      return(1);
    }
 
-   Mat mask1,mask2,hsv_image,picture, gray_picture, gmask;
-   //cvtColor(inputdata, hsv_image, CV_BGR2HSV, 3);
-   cvtColor(inputdata,gray_picture, CV_BGR2GRAY,3);
-   imshow("main", inputdata);
-   waitKey(3000);
+   Mat mask1,mask2,hsv_image;
+   cvtColor(inputdata, hsv_image, CV_BGR2HSV, 3);
 
 
-   /*Scalar min_edge1 = Scalar(H_MIN1, S_MIN, V_MIN);
+   Scalar min_edge1 = Scalar(H_MIN1, S_MIN, V_MIN);
    Scalar max_edge1 = Scalar(H_MAX1, S_MAX, V_MAX);
    inRange(hsv_image, min_edge1, max_edge1, mask1);
    Scalar min_edge2 = Scalar(H_MIN2, S_MIN, V_MIN);
@@ -47,38 +56,34 @@ int main(void){
    inRange(hsv_image, min_edge2, max_edge2, mask2);
 
    Mat mask = mask1 + mask2;
-   */
+   int Redsum=0;
+   for(int i = 0; i <320 ; i++){
+   for(int j = 0; j <240 ; j++){
+     if(mask.data[j * mask.step + i * mask.elemSize() + 0 ] == 255){
+       Redsum++;
+     }
+   }
+ }
 
-  /* Mat element8 = (Mat_<uchar>(3,3) << 1,1,1,1,1,1,1,1,1);
+   Mat element8 = (Mat_<uchar>(3,3) << 1,1,1,1,1,1,1,1,1);
    morphologyEx(mask, mask, CV_MOP_OPEN, element8, Point(-1,-1), 1);
    morphologyEx(mask, mask, CV_MOP_CLOSE, element8, Point(-1,-1), 1);
    imwrite("work2.jpg", mask);
-   imshow("mask", mask);
-   */
- //Mat kernel = (Mat_<uchar>(3,3) << 1,1,1,1,-8,1,1,1,1);
- unsigned char lap[3][3] = {{1,1,1},{1,-8,1},{1,1,1}};
- Mat filter(Size(3,3), CV_8S,lap);
- filter2D(gray_picture, gray_picture, gray_picture.depth(), filter);
- //filter2D(gray_picture, gray_picture,-1,kernel,Point(-1,-1),0,BORDER_DEFAULT);
- imshow("mask", gray_picture);
- waitKey(1000);
+   //imshow("mask", mask);
 
-int a;
- while(1){
-   cin >> a;
-   if(a==1)break;
- Scalar min_edge1 = Scalar(a);
- Scalar max_edge1 = Scalar(255);
- inRange(gray_picture, min_edge1, max_edge1, gmask);
- imshow("mask", gmask);
-  waitKey(1000);
- }
 
-   /*vector<vector<Point> > contours;
+   waitKey(5000);
+
+   vector<vector<Point> > contours;
    findContours(mask, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
    double max_area =0;
    double area;
    int max_contour = 0;
+   if(contours.size()==0){
+     cout << "none" << endl;
+     cout << "none" << endl;
+     return(1);
+   }
    for (int i=0; i < contours.size(); i++){
      area = contourArea(contours.at(i));
      if(max_area< area){
@@ -99,10 +104,12 @@ int a;
    y = y/pointcount;
    cout << x << endl;
    cout << y << endl;
+   cout << Redsum << endl;
 
-    circle(inputdata, cv::Point(x,y), 60, Scalar(0,255,0), 3, 4);
-    imshow("result", inputdata);
-    imwrite("work3.jpg", inputdata);*/
+    circle(inputdata, cv::Point(x,y), 30, Scalar(0,255,0), 2, 4);
+    //imshow("result", inputdata);
+    imwrite("work3.jpg", inputdata);
+    waitKey(5000);
     return(1);
 
 }

@@ -6,6 +6,7 @@
 #include "./local_libs/RoverMotor.h"
 #include "./local_libs/Matrix.h"
 #include "./local_libs/LowPass.h"
+#include "./local_libs/SPIProtocol.h"
 #include "./PinDefinitions.h"
 
 #define MaxC 1 // per sec
@@ -51,15 +52,7 @@ lyncs::LowPass<double> pty(0.05);
 
 char buf[100];
 int spi1;
-int spi2;
-int spi3;
-int spi4;
-int spi5;
-int spi6;
-int spi7;
-int spi8;
-unsigned char cspi1;
-unsigned char cspi2;
+char cspi1;
 volatile byte pos;
 volatile boolean process_it;
 bool dmpReady = false;  // set true if DMP init was successful
@@ -90,6 +83,7 @@ double pid(double array[], const double a_m, const double proportion_gain, const
 double pid_a(double array[], const double a_m, const double proportion_gain);
 double TimeUpdate(); //前回この関数が呼ばれてからの時間 us単位
 void GetRotMatrix(lyncs::Matrix<double, 3, 3> &rot_matrix, double f, double e, double d);
+bool SPIRestoreInt(const unsigned char *translated, int &restored);
 //MS5xxx sensor(&Wire);
 void setup()
 {
@@ -155,16 +149,8 @@ void loop()
 	if (process_it)
 	{
 		buf[pos] = 0;
-		spi1 = *(int *)(&buf[0]);
-		spi2 = *(int *)(&buf[4]);
-		spi3 = *(int *)(&buf[8]);
-		spi4 = *(int *)(&buf[12]);
-		spi5 = *(int *)(&buf[16]);
-		spi6 = *(int *)(&buf[20]);
-		spi7 = *(int *)(&buf[24]);
-		spi8 = *(int *)(&buf[28]);
-		cspi1 = buf[32];
-		cspi2 = buf[33];
+		SPIRestoreInt(&buf[0], spi1);
+		SPIRestoreChar(&buf[5], cspi1);
 		pos = 0;
 		process_it = false;
 	}
@@ -234,17 +220,7 @@ void loop()
 		rvn1 = rvn;
 		double Real;
 		Real = realaccel * 5;
-
-		if (spi7 == spi8)
-		{
-			vh.InputData((double)spi8 / 1000);
-		}
-		if ((spi7 - spi8) == 256)
-		{
-			vh.InputData((double)spi8 / 1000);
-		}
 	}
-
 	if ((gzzz - gy[0]) > PI)
 	{
 		gztank += 2 * PI;
@@ -257,28 +233,23 @@ void loop()
 	gzzz = gy[0];
 	gy[0] += gztank;
 
-	//通信系
-	if (cspi1 == cspi2)
+	switch (spi1)
 	{
-		while (cspi1 == 1)
-		{
-			rover_motor.RoverPower(0, 0);
-			Serial.println("END");
-			delay(100000);
-		}
-	}
-	if (spi1 == spi2)
-	{
-		center.InputData((double)spi1 / 1000 * MaxC);
-	}
-
-	if (spi5 == spi6)
-	{
-		ptx = (double)spi5 * 0.001;
-	}
-	if (spi3 == spi4)
-	{
-		pty.InputData((double)spi3 * MaxA / 1000 / 180 * PI);
+	case 0: //GPS進行
+		rover_motor.RoverPower(0.5, 0);
+		break;
+	case 1: //後進
+		rover_motor.RoverPower(-0.5, 0);
+		break;
+	case 2: //回避
+		// do something
+		break;
+	case 3: //停止
+		rover_motor.RoverPower(0, 0);
+		break;
+	case 4: //カメラ進行
+		// do something
+		break;
 	}
 
 	cleenarray3(kz_a, gyv[2]);
