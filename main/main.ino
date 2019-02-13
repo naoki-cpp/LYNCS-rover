@@ -52,7 +52,7 @@ lyncs::LowPass<double> pty(0.05);
 
 char buf[100];
 int spi1;
-char cspi1;
+unsigned char cspi1;
 volatile byte pos;
 volatile boolean process_it;
 bool dmpReady = false;  // set true if DMP init was successful
@@ -83,7 +83,6 @@ double pid(double array[], const double a_m, const double proportion_gain, const
 double pid_a(double array[], const double a_m, const double proportion_gain);
 double TimeUpdate(); //前回この関数が呼ばれてからの時間 us単位
 void GetRotMatrix(lyncs::Matrix<double, 3, 3> &rot_matrix, double f, double e, double d);
-bool SPIRestoreInt(const unsigned char *translated, int &restored);
 //MS5xxx sensor(&Wire);
 void setup()
 {
@@ -150,7 +149,7 @@ void loop()
 	{
 		buf[pos] = 0;
 		SPIRestoreInt(&buf[0], spi1);
-		SPIRestoreChar(&buf[5], cspi1);
+		SPIRestoreUnsignedChar(&buf[5], cspi1);
 		pos = 0;
 		process_it = false;
 	}
