@@ -21,6 +21,6 @@ add_library(${PROJECT_NAME}   MODULE
 	ArduinoControl.cpp
 	TransferValuesToArduino.cpp
 	)
-target_link_libraries(${PROJECT_NAME} PRIVATE open_cv_ pybind11::module)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${open_cv_} pybind11::module)
 set_target_properties(${PROJECT_NAME}  PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
 											SUFFIX "${PYTHON_MODULE_EXTENSION}")

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
@@ -28,7 +27,7 @@ int Csearch(int H_MAX1, int H_MIN1, int H_MAX2, int H_MIN2, double coordinate[2]
 	cap >> inputdata;
 	if (inputdata.empty())
 	{
-		cout << "end0" << endl;
+		//cout << "end0" << endl;
 		return (1);
 	}
 
@@ -83,8 +82,8 @@ int Csearch(int H_MAX1, int H_MIN1, int H_MAX2, int H_MIN2, double coordinate[2]
 	int max_contour = 0;
 	if (contours.size() == 0)
 	{
-		cout << "none" << endl;
-		cout << "none" << endl;
+		//cout << "none" << endl;
+		//cout << "none" << endl;
 		return (0);
 	}
 	for (int i = 0; i < contours.size(); i++)

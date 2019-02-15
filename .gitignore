@@ -1,10 +1,13 @@
+#Python cache
+*.pyc
+__pycache__
+
 #CMake cache
 build
 
 # For  Macintosh
 *.DS_Store
 *._*
-__pycache__
 
 #For Visual Studio Code
 *.json

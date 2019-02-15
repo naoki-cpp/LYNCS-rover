@@ -26,4 +26,4 @@ bash bin/install_dependencies.sh
 - OpenCV 2
 - pybind11
 - CMake > 3.0
-- micropyGPS
+- pynmea2
