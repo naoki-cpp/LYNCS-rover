@@ -5,3 +5,5 @@ install:
   - bash bin/install_dependencies.sh
 script:
   - arduino --verify --board arduino:avr:micro main/main.ino
+  - cd raspberry_pi/rover
+  - bash install.sh
