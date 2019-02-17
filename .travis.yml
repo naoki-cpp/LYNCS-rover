@@ -3,5 +3,6 @@ before_install:
   - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
 install:
   - bash bin/install_arduino.sh -d /usr/local/share/arduino -v 1.8.8
+  - bash bin/install_opencv.sh
 script:
   - arduino --verify --board arduino:avr:micro main/main.ino
