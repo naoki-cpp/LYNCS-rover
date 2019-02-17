@@ -6,3 +6,6 @@ install:
   - bash bin/install_opencv.sh
 script:
   - arduino --verify --board arduino:avr:micro main/main.ino
+  cache:
+    directories:
+    - opencv/build
