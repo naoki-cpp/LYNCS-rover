@@ -7,6 +7,7 @@ sudo aptitude install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavfor
 
 echo "Downloading OpenCV..."
 git clone https://github.com/opencv/opencv.git
+
 echo "Installing..."
 cd opencv
 mkdir build
