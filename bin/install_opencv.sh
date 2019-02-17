@@ -2,12 +2,11 @@
 
 
 echo "Installing reqiured packages for OpenCV..."
-sudo aptitude install build-essential
-sudo aptitude install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install build-essential
+sudo apt-get install cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
 
 echo "Downloading OpenCV..."
 git clone https://github.com/opencv/opencv.git
-
 echo "Installing..."
 cd opencv
 mkdir build
