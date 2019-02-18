@@ -8,4 +8,4 @@ script:
   - arduino --verify --board arduino:avr:micro main/main.ino
 cache:
   directories:
-  - opencv/build
+  - $HOME/opencv
