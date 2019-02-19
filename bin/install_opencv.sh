@@ -17,4 +17,4 @@ mkdir -p build
 cd build
 cmake -D CMAKE_BUILD_TYPE=Release -D CMAKE_INSTALL_PREFIX=/usr/local ..
 make -j4
-sudo make install
+sudo make -j4 install
