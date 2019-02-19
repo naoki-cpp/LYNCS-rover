@@ -16,11 +16,11 @@ endif()
 #For the shared library
 add_subdirectory(pybind11)
 add_library(${PROJECT_NAME}   MODULE
-	rover_lib.cpp
 	CalculateCsearch.cpp
 	ArduinoControl.cpp
 	TransferValuesToArduino.cpp
+	rover_lib.cpp
 	)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${open_cv_} pybind11::module)
+target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::module open_cv_)
 set_target_properties(${PROJECT_NAME}  PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
 											SUFFIX "${PYTHON_MODULE_EXTENSION}")

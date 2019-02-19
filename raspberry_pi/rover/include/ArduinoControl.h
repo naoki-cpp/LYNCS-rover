@@ -1,3 +1,13 @@
 #pragma once
-void Csearch1();
-void Csearch2();
+#include "../include/Csearch.h"
+class ArduinoControl
+{
+private:
+	Csearch csearch_;
+public:
+	ArduinoControl(/* args */);
+	~ArduinoControl();
+	int Init();
+	void Csearch1();
+	void Csearch2();
+};

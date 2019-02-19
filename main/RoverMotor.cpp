@@ -26,7 +26,7 @@ void RoverMotor::Init()
 }
 void RoverMotor::RoverOutput(double outR, double outL)
 {
-	servo_right_.writeMicroseconds(1500 + outR * 500);
+	servo_right_.writeMicroseconds(1500 - outR * 500);
 	servo_left_.writeMicroseconds(1500 + outL * 500);
 }
 void RoverMotor::RoverPower(double outV, double outT)

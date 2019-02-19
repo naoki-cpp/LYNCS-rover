@@ -11,33 +11,45 @@
 using namespace std;
 using namespace cv;
 
-int Csearch(int H_MAX1, int H_MIN1, int H_MAX2, int H_MIN2, double coordinate[2])
-{
-	VideoCapture cap(0);
-	cv::Mat inputdata;
 
-	if (!cap.isOpened())
+Csearch::Csearch()
+{
+	cap_ = new VideoCapture(0);
+	inputdata_ = new Mat;
+}
+
+Csearch::~Csearch()
+{
+	delete cap_;
+	delete inputdata_ ;
+}
+
+int Csearch::Init()
+{	
+	if (!cap_->isOpened())
 	{
 		return -1;
 	}
+	cap_->set(3, 320);
+	cap_->set(4, 240);
+	return 1;
+}
 
-	cap.set(3, 320);
-	cap.set(4, 240);
-
-	cap >> inputdata;
-	if (inputdata.empty())
+int Csearch::Search(int H_MAX1, int H_MIN1, int H_MAX2, int H_MIN2, double coordinate[2])
+{
+	(*cap_) >> (*inputdata_);
+	if (inputdata_->empty())
 	{
 		//cout << "end0" << endl;
 		return (1);
 	}
 
-	//imshow("result",inputdata );
-	//imwrite("work1.jpg", inputdata);
+	//imshow("result",(*inputdata_) );
+	//imwrite("work1.jpg", (*inputdata_);
 	//waitKey(1000);
 
-
 	Mat mask1, mask2, hsv_image;
-	cvtColor(inputdata, hsv_image, COLOR_BGR2HSV, 3);
+	cvtColor((*inputdata_), hsv_image, COLOR_BGR2HSV, 3);
 
 	Scalar min_edge1 = Scalar(H_MIN1, S_MIN, V_MIN);
 	Scalar max_edge1 = Scalar(H_MAX1, S_MAX, V_MAX);
@@ -108,9 +120,9 @@ int Csearch(int H_MAX1, int H_MIN1, int H_MAX2, int H_MIN2, double coordinate[2]
 	coordinate[1] = coordinate[1] / pointcount;
 	//cout << Redsum << endl;
 
-	//circle(inputdata, cv::Point(coordinate[0], coordinate[1]), 30, Scalar(0, 255, 0), 2, 4);
-	//imshow("result", inputdata);
-	//imwrite("work3.jpg", inputdata);
+	//circle((inputdata_inputdata_, cv::Point(coordinate[0], coordinate[1]), 30, Scalar(0, 255, 0), 2, 4);
+	//imshow("result", inputdata_);
+	//imwrite("work3.jpg", inputdata_);
 	//waitKey(5000);
 	return (2);
 }
