@@ -27,7 +27,7 @@ void ArduinoControl::Csearch1()
 
 	while (k < 4)
 	{
-		judgei = csearch_.Search(80, 40, 80, 40, xy);
+		judgei = csearch_.Search(110, 101, 100, 90, xy);
 		if (judgei == 2 or judgei == 3)
 		{
 			TransferValuesToArduino(0, 1);
