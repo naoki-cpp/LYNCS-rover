@@ -3,5 +3,8 @@ before_install:
   - "/sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_1.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :1 -ac -screen 0 1280x1024x16"
 install:
   - bash bin/install_dependencies.sh
+  - sudo pip install pynmea2
 script:
   - arduino --verify --board arduino:avr:micro main/main.ino
+  - cd raspberry_pi/rover/py_src
+  - python -m unittest discover tests
