@@ -12,5 +12,5 @@ while True:
     if r_theata[0]*1000 < 20:
         cs.Csearch2()
     else:
-        lyncs_rover.TransferValuesToArduino((int)(r_theata[0]*1000), 0)
+        cs.Transfer((int)(r_theata[0]*1000), 0)
     sleep(1)

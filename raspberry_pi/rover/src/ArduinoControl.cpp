@@ -16,9 +16,19 @@ ArduinoControl::~ArduinoControl()
 }
 
 int ArduinoControl::Init(){
-	return csearch_.Init();
+	int ret_cs = csearch_.Init();
+	int ret_ar = transfer_.Init();
+	if (ret_cs < 0 || ret_ar < 0) {
+		return -1;
+	}else
+	{
+		return 0;
+	}
 }
-
+int ArduinoControl::Transfer(int angle, unsigned char order)
+{
+	transfer_.Transfer(angle,order);
+}
 void ArduinoControl::Csearch1()
 {
 	int judgei;
@@ -30,7 +40,7 @@ void ArduinoControl::Csearch1()
 		judgei = csearch_.Search(110, 101, 100, 90, xy);
 		if (judgei == 2 or judgei == 3)
 		{
-			TransferValuesToArduino(0, 1);
+			transfer_.Transfer(0, 1);
 			cout << count++ <<endl;
 			break;
 		}
@@ -56,18 +66,18 @@ void ArduinoControl::Csearch2()
 		if (judgei == 2)
 		{
 			answer = ConvertCoordinateToAngle(xy) * 1000;
-			TransferValuesToArduino((int)answer, 4);
+			transfer_.Transfer((int)answer, 4);
 			cout << answer << endl;
 			break;
 		}
 		if (judgei == 0)
 		{
-			TransferValuesToArduino(0, 2);
+			transfer_.Transfer(0, 2);
 			break;
 		}
 		if (judgei == 3)
 		{
-			TransferValuesToArduino(0, 3);
+			transfer_.Transfer(0, 3);
 			break;
 		}
 
