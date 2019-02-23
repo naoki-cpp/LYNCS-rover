@@ -11,6 +11,6 @@ class ArduinoControl
 	~ArduinoControl();
 	int Init();
 	int Transfer(int angle, unsigned char order);
-	void Csearch1();
+	int Csearch1();
 	void Csearch2();
 };

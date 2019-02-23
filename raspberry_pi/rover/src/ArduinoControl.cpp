@@ -29,7 +29,7 @@ int ArduinoControl::Transfer(int angle, unsigned char order)
 {
 	transfer_.Transfer(angle,order);
 }
-void ArduinoControl::Csearch1()
+int ArduinoControl::Csearch1()
 {
 	int judgei;
 	char k = 0;
@@ -44,8 +44,9 @@ void ArduinoControl::Csearch1()
 			cout << count++ <<endl;
 			break;
 		}
-		if (judgei == 2)
+		if (judgei == 0)
 		{
+			return 1;
 			break;
 		}
 
