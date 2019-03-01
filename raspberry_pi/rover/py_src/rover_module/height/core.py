@@ -2,8 +2,9 @@ from smbus2 import SMBus
 import time
 
 sea_pressure = 1024.7
-max_high = 30
-low_high = 50
+max_high = 40
+low_high = 33
+given_data = 30
 
 bus_number = 1
 i2c_address = 0x76
@@ -155,7 +156,7 @@ def setup():
 
 
 def judgeHight1():
-    if readData() < max_high:
+    if readData() > max_high:
         return 0
     else:
         return 1
