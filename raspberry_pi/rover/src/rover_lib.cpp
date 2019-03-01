@@ -12,6 +12,7 @@ PYBIND11_MODULE(lyncs_rover, m)
 		.def("Csearch1", &ArduinoControl::Csearch1)
 		.def("Csearch2", &ArduinoControl::Csearch2)
 		.def("Transfer", &ArduinoControl::Transfer)
+		.def("LogOutput", &ArduinoControl::LogOutput)
 		.def("__repr__", [](const ArduinoControl &p) {
 			return "ArduinoControl()";
 		});

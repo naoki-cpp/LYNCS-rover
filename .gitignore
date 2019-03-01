@@ -1,8 +1,11 @@
-#Python cache
+#Log files
+*.log
+
+#Python cache files
 *.pyc
 __pycache__
 
-#CMake cache
+#CMake cachefiles
 build
 
 # For  Macintosh
