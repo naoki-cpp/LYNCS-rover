@@ -54,7 +54,7 @@ lyncs::LowPass<double> pty(0.05);
 
 char buf[100];
 int spi1;
-unsigned char cspi1=4;
+unsigned char cspi1=7;
 volatile byte pos;
 volatile boolean process_it;
 bool dmpReady = false;  // set true if DMP init was successful
@@ -265,6 +265,7 @@ void loop()
       			vkz = (-1)*vkz_pid.GetPID();
       			rover_motor.RoverPower(1, vkz);
       			break;
+		
 		}
 
 	//kv_a_pid.InputPID(vn - v00,0,1);

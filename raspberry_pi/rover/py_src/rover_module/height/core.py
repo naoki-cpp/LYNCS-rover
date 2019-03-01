@@ -1,7 +1,8 @@
-from smbus2 import SMBus
+from smbus import SMBus
 import time
+import math
 
-sea_pressure = 1024.7
+sea_pressure = 1023
 max_high = 40
 low_high = 33
 given_data = 30
@@ -79,8 +80,11 @@ def readData():
     recover_T = compensate_T(temp_raw)
     recover_P = compensate_P(pres_raw)
     recover_H = compensate_H(hum_raw)
-    mesure_high = ((sea_pressure / recover_P)**
-                   (1 / 5.257) - 1) * (recover_T + 273.15) / 0.0065
+    #print(recover_T)
+    #print(recover_P)
+    #print(recover_H)
+    mesure_high = ((((sea_pressure/recover_P)**(1/5.257)) - 1.) * (recover_T + 273.15)) / 0.0065
+    #print(mesure_high)
     return mesure_high
 
 
@@ -156,18 +160,22 @@ def setup():
 
 
 def judgeHight1():
-    if readData() > max_high:
-        return 0
-    else:
-        return 1
+    while True:
+        judge_data0 = readData()
+        #print(judge_data0)
+        if judge_data0 > max_high:
+            break
+        time.sleep(1)
 
 
 def judgeHight2():
-    judge_newH_data = readData()
-    if judge_newH_data < max_high:
-        return 0
-    else:
-        return 1
+    while True:
+        global given_data
+        judge_data = readData()
+        if judge_data < low_high and math.fabs(given_data-judge_data) < 1:
+            break
+        given_data = judge_data
+
 
 
 setup()
@@ -176,11 +184,9 @@ get_calib_param()
 if __name__ == '__main__':
     try:
         D_m = Data_manipulate()
-        while judgeHight1():
-            time.sleep(1)
+        judgeHight1()
         print("phase1")
-        while judgeHight2():
-            time.sleep(1)
+        judgeHight2()
         print("phase2")
 
     except KeyboardInterrupt:

@@ -37,17 +37,18 @@ int ArduinoControl::Csearch1()
 
 	while (k < 4)
 	{
-		judgei = csearch_.Search(110, 101, 130, 111, xy);
+		judgei = csearch_.Search(118, 117, 122, 119, xy);
 		if (judgei == 2 or judgei == 3)
 		{
 			transfer_.Transfer(0, 1);
-			cout << count++ <<endl;
+			cout << "0" << " "<< "1" << endl;
 			break;
 		}
 		if (judgei == 0)
 		{
 			return 1;
 			break;
+			return 1;
 		}
 
 		k++;
@@ -68,17 +69,19 @@ void ArduinoControl::Csearch2()
 		{
 			answer = ConvertCoordinateToAngle(xy) * 1000;
 			transfer_.Transfer((int)answer, 4);
-			cout << answer << endl;
+			cout << answer << " " << "4" <<  endl;
 			break;
 		}
 		if (judgei == 0)
 		{
 			transfer_.Transfer(0, 2);
+			cout << "0" << " "<< "2" << endl;
 			break;
 		}
 		if (judgei == 3)
 		{
 			transfer_.Transfer(0, 3);
+			cout << "0" << " "<< "3" << endl;
 			break;
 		}
 
