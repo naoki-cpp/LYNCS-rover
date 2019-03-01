@@ -18,7 +18,7 @@ double realaccel;
 
 lyncs::RoverMotor rover_motor = lyncs::RoverMotor();
 lyncs::Matrix<double, 3, 3> rotation_matrix = lyncs::Matrix<double, 3, 3>();
-lyncs::PIDController vkz_pid(9,62.28,0.108);
+lyncs::PIDController vkz_pid(9,45.25,0.4475);
 lyncs::PIDController kv_a_pid(1,0,0);
 long int intypr[3];
 double aaxT;
@@ -93,6 +93,7 @@ void setup()
 	Wire.begin();
 	Wire.setClock(400000L);
 	Serial.begin(115200);
+  pinMode(11, OUTPUT);
 	while (!Serial)
 	{
 	}
@@ -147,7 +148,7 @@ void loop()
 		pos = 0;
 		process_it = false;
 	}
-  
+
 
 	if (!dmpReady)
 	{
@@ -239,10 +240,10 @@ void loop()
 			vkz = (-1)*vkz_pid.GetPID();
 			rover_motor.RoverPower(1, vkz);
 			break;
-		case 1: //後進
+		case 0: //後進
 			rover_motor.RoverPower(-1, 0);
 			break;
-		case 0: //回避
+		case 1: //回避
 			// do something
 			target_angle=1.757+stack_angle;
 			vkz_pid.InputPID(gyz-gy[0],target_angle,0.01);
@@ -265,19 +266,23 @@ void loop()
       			vkz = (-1)*vkz_pid.GetPID();
       			rover_motor.RoverPower(1, vkz);
       			break;
-		
+    case 6:
+            digitalWrite(11, HIGH);
+            delay(2000);
+            digitalWrite(11, LOW);
 		}
 
 	//kv_a_pid.InputPID(vn - v00,0,1);
 
 	//Serial.println(vkz);
   }
+
 	  Serial.print(spi1);
    Serial.print(" ");
    Serial.print(cspi1);
    Serial.print(" ");
    Serial.println(target_angle);
-   
+
    //Serial.println(stack_angle);
 	countx++;
 }
