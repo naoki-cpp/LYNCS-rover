@@ -18,13 +18,14 @@ def lat_long_reader(sentence):
     list : list of float or None
         緯度と経度のリスト。sentenceにこれらの情報が含まれていなかった場合はNoneとなる。
     """
-    msg = pynmea2.parse(sentence)
-    lat = None
-    longi = None
-    if msg.latitude != None:
-        lat = float(msg.latitude)
-    if msg.longitude != None:
-        longi = float(msg.longitude)
+    try:
+        msg = pynmea2.parse(sentence)
+        if msg.latitude != None:
+            lat = float(msg.latitude)
+        if msg.longitude != None:
+            longi = float(msg.longitude)
+    except:
+        lat, longi = [None, None]
     return [lat, longi]
 
 
@@ -62,11 +63,16 @@ def lat_long_measurement():
     """
     s = serial.Serial('/dev/serial0', 9600, timeout=10)
     while True:
-        sentence = s.readline().decode('utf-8')  # GPSデーターを読み、文字列に変換する
-        if sentence[0] == '$' and ('GGA' in sentence or 'RMC' in sentence
-                                   or 'GLL' in sentence):
+        se = s.readline()
+        print(se)
+        sentence = se.decode(encoding='utf-8', errors='replace')
+        if sentence[3:6] == 'GGA' or sentence[3:6] == 'RMC' or sentence[
+                3:6] == 'GLL':
             lat_and_long = lat_long_reader(sentence)
-            break
+            if lat_and_long[0] == 0 or lat_and_long[1] == 0:
+                continue
+            else:
+                break
     return [lat_and_long[0], lat_and_long[1]]
 
 
@@ -90,6 +96,7 @@ def velocity_measurement():
             gps_data = velocity_reader(sentence)
             break
     return [gps_data[0], gps_data[1]]
+
 
 r = 6378.137  # km
 
@@ -149,7 +156,7 @@ def r_theta_to_goal(goal_lat, goal_long):
     距離の単位はkm, 方位角の単位はradである。
     """
     current_coordinate = lat_long_measurement()
-    if current_coordinate[0] == None or current_coordinate[1] == None:
+    if current_coordinate[0] is None or current_coordinate[1] is None:
         return None
     else:
         return convert_lat_long_to_r_theta(
