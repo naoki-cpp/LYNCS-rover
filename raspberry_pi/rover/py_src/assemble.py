@@ -8,9 +8,9 @@ if cs.Init() == -1:
     print('error')
 
 height.judgeHight1()
-print("phase1")
+cs.LogOutput("phase1")
 height.judgeHight2()
-print("phase2")
+cs.LogOutput("phase2")
 
 
 while True:

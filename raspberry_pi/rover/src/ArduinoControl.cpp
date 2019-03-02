@@ -19,10 +19,26 @@ ArduinoControl::~ArduinoControl()
 
 int ArduinoControl::Init()
 {
-	log_file_ << "start" << endl;
+	LogOutput("__arduino_control_init__");
 	int ret_cs = csearch_.Init();
 	int ret_ar = transfer_.Init();
-	if (ret_cs < 0 || ret_ar < 0)
+	if (ret_cs < 0) {
+		stringstream s;
+		s << "camera error code::" << ret_cs;
+		LogOutput(s.str());
+	}else{
+		LogOutput("successfully opened the camera");
+	}
+
+	if (ret_ar < 0) {
+		stringstream s;
+		s << "spi error code::" << ret_ar;
+		LogOutput(s.str());
+	}else{
+		LogOutput("successfully opened the Arduino micro");
+	}
+	
+	if (ret_cs * ret_ar < 0)
 	{
 		return -1;
 	}
@@ -46,6 +62,7 @@ void ArduinoControl::LogOutput(string str)
 	//result = "2015-5-19-11-30-21"
 	string result = s.str();
 	log_file_ << result << endl;
+	cout << str << endl;
 }
 
 int ArduinoControl::Transfer(int angle, unsigned char order)
@@ -54,7 +71,6 @@ int ArduinoControl::Transfer(int angle, unsigned char order)
 	stringstream log_result;
 	log_result  << "angle::"<< angle << ",order::" << int(order) << "";
 	LogOutput(log_result.str());
-	cout << log_result.str() << endl;
 }
 int ArduinoControl::Csearch1()
 {
