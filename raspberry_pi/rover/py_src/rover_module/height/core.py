@@ -2,9 +2,9 @@ from smbus import SMBus
 import time
 import math
 
-sea_pressure = 1023
+sea_pressure = 1018
 max_high = 40
-low_high = 33
+low_high = 37
 given_data = 30
 
 bus_number = 1
@@ -159,34 +159,13 @@ def setup():
     writeReg(0xF5, config_reg)
 
 
-def judgeHight1():
-    while True:
-        judge_data0 = readData()
-        #print(judge_data0)
-        if judge_data0 > max_high:
-            break
-        time.sleep(1)
-
-
-def judgeHight2():
-    while True:
-        global given_data
-        judge_data = readData()
-        if judge_data < low_high and math.fabs(given_data-judge_data) < 0.8:
-            break
-        given_data = judge_data
-
-
-
 setup()
 get_calib_param()
 
 if __name__ == '__main__':
     try:
         D_m = Data_manipulate()
-        judgeHight1()
         print("phase1")
-        judgeHight2()
         print("phase2")
 
     except KeyboardInterrupt:
