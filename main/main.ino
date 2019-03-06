@@ -3,6 +3,7 @@
 #include <Wire.h>
 #include <I2Cdev.h>
 #include <MPU6050_6Axis_MotionApps20.h>
+#include <avr/wdt.h>
 #include "./local_libs/RoverMotor.h"
 #include "./local_libs/Matrix.h"
 #include "./local_libs/LowPass.h"
@@ -117,7 +118,160 @@ void setup()
 	process_it = false;
 	// now turn on interrupts
 	SPI.attachInterrupt();
+	wdt_disable();
+	wdt_enable(WDTO_8S);
+	Serial.print("reset");
 	delay(5000);
+	while (true)
+	{
+
+		if (process_it)
+		{
+			buf[pos] = 0;
+			SPIRestoreInt(&buf[0], spi1);
+			SPIRestoreUnsignedChar(&buf[5], cspi1);
+			stack_angle = gyz - gy[0];
+			pos = 0;
+			process_it = false;
+		}
+
+		if (!dmpReady)
+		{
+			return;
+		}
+		while (!mpuInterrupt && fifoCount < packetSize)
+		{
+		}
+		mpuInterrupt = false;
+		mpuIntStatus = mpu.getIntStatus();
+		fifoCount = mpu.getFIFOCount();
+		if ((mpuIntStatus & 0x10) || fifoCount == 1024)
+		{
+			mpu.resetFIFO();
+		}
+		else if (mpuIntStatus & 0x02)
+		{
+			while (fifoCount < packetSize)
+			{
+				fifoCount = mpu.getFIFOCount();
+			}
+			mpu.getFIFOBytes(fifoBuffer, packetSize);
+			fifoCount -= packetSize;
+			mpu.dmpGetQuaternion(&q, fifoBuffer);
+			mpu.dmpGetAccel(&aa, fifoBuffer);
+			mpu.dmpGetGravity(&gravity, &q);
+			mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+
+			gy[0] = (double)ypr[0];
+			gy[1] = (double)ypr[1];
+			gy[2] = (double)ypr[2];
+			mpu.dmpGetGyro(&gyro, fifoBuffer);
+			gyv[0] = (double)gyro.x;
+			gyv[1] = (double)gyro.y;
+			gyv[2] = (double)gyro.z;
+			y0 = (-1) * ypr[0];
+			y1 = (-1) * ypr[1];
+			y2 = ypr[2];
+
+			GetRotMatrix(rotation_matrix, (double)y0, (double)y1, (double)y2);
+
+			long int intaax = (long int)(aa.x / 7.6);
+			long int intaay = (long int)(aa.y / 8.0);
+			long int intaaz = (long int)(aa.z / 10.2);
+
+			intypr[0] = (long int)(ypr[0] * 1000);
+			intypr[1] = (long int)(ypr[1] * 1000);
+			intypr[2] = (long int)(ypr[2] * 1000);
+
+			aaxT = (double)((-1) * intypr[0] * 1000 + 930 * intypr[1] * 1000 + 3 * intypr[2] * 1000 + 3 * intypr[1] * intypr[1] + (-4) * intypr[2] * intypr[2] + 10 * intypr[0] * intypr[1] + 4 * intypr[1] * intypr[2] + 3 * intypr[0] * intypr[2] + 10 * intaax * 1000);
+			aayT = (double)(9 * intypr[0] * 1000 + (-20) * intypr[1] * 1000 + 940 * intypr[2] * 1000 + (-40) * intypr[1] * intypr[1] + (-30) * intypr[2] * intypr[2] + 30 * intypr[0] * intypr[1] + 40 * intypr[1] * intypr[2] + (-30) * intypr[0] * intypr[2] + 7 * intaay * 1000);
+			aazT = (double)((-4) * intypr[0] * 1000 + 10 * intypr[1] * 1000 + (-20) * intypr[2] * 1000 + 5 * intypr[0] * intypr[0] + 9 * intypr[1] * intypr[1] + (-10) * intypr[2] * intypr[2] + (-30) * intypr[0] * intypr[1] + (-30) * intypr[1] * intypr[2] + 9 * intypr[0] * intypr[2] + 990 * intaaz * 1000);
+			aaxT *= 0.000000001;
+			aayT *= 0.000000001;
+			aazT *= 0.000000001;
+			vz = rotation_matrix.GetElement(2, 0) * aaxT + rotation_matrix.GetElement(2, 1) * aayT + rotation_matrix.GetElement(2, 2) * aazT;
+
+			double delta_time = TimeUpdate() / 1000000;
+			rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
+			vn = (rvn * we - rvn2 * we - (delta_time / 2 * wh - 1) * (we - 2 / delta_time) * vn2 - ((delta_time / 2 * wh - 1) * (2 / delta_time + we) + (we - 2 / delta_time) * (1 + delta_time / 2 * wh)) * vn1) / (1 + delta_time / 2 * wh) / (2 / delta_time + we);
+			vn2 = vn1;
+			vn1 = vn;
+			rvn2 = rvn1;
+			rvn1 = rvn;
+			double Real;
+			Real = realaccel * 5;
+		}
+		if ((gzzz - gy[0]) > PI)
+		{
+			gztank += 2 * PI;
+		}
+		if ((gy[0] - gzzz) > PI)
+		{
+			gztank -= 2 * PI;
+		}
+
+		gzzz = gy[0];
+		gy[0] += gztank;
+		double target_angle;
+		if (countx == 10)
+		{
+			gyz = gy[0];
+		}
+		if (countx > 10)
+		{
+			switch (cspi1)
+			{
+			case 0: //後進
+				rover_motor.RoverPower(-1, 0);
+				break;
+			case 1: //回避
+				// do something
+				target_angle = 1.757 + stack_angle;
+				vkz_pid.InputPID(gyz - gy[0], target_angle, 0.01);
+				vkz = (-1) * vkz_pid.GetPID();
+				rover_motor.RoverPower(1, vkz);
+				break;
+			case 2: //回転
+				rover_motor.RoverPower(0, 0.5);
+				break;
+			case 3: //停止
+				rover_motor.RoverPower(0, 0);
+				break;
+			case 4: //Gカメラ進行
+				target_angle = (-1) * spi1 / 1000 + stack_angle;
+				vkz_pid.InputPID(gyz - gy[0], target_angle, 0.01);
+				vkz = (-1) * vkz_pid.GetPID();
+				rover_motor.RoverPower(1, vkz);
+				break;
+			case 5: //GPS
+				target_angle = (-1) * (double)spi1 / 1000 + ((int)((gyz - gy[0]) / 3.1415)) * 3.1415;
+				vkz_pid.InputPID(gyz - gy[0], target_angle, 0.01);
+				vkz = (-1) * vkz_pid.GetPID();
+				rover_motor.RoverPower(1, vkz);
+				break;
+			case 6: //パラ分離
+				if (judge_bool == 0)
+				{
+					digitalWrite(11, HIGH);
+					delay(800);
+					digitalWrite(11, LOW);
+					delay(2000);
+					judge_bool = 1;
+				}
+			}
+
+			//Serial.println(vkz);
+		}
+
+		/*Serial.print(spi1);
+   Serial.print(" ");
+   Serial.print(cspi1);
+   Serial.print(" ");
+   Serial.println(target_angle);*/
+
+		//Serial.println(stack_angle);
+		countx++;
+	}
 }
 
 ISR(SPI_STC_vect)
@@ -135,152 +289,6 @@ ISR(SPI_STC_vect)
 
 void loop()
 {
-	if (process_it)
-	{
-		buf[pos] = 0;
-		SPIRestoreInt(&buf[0], spi1);
-		SPIRestoreUnsignedChar(&buf[5], cspi1);
-		stack_angle=gyz-gy[0];
-		pos = 0;
-		process_it = false;
-	}
-
-	if (!dmpReady)
-	{
-		return;
-	}
-	while (!mpuInterrupt && fifoCount < packetSize)
-	{
-	}
-	mpuInterrupt = false;
-	mpuIntStatus = mpu.getIntStatus();
-	fifoCount = mpu.getFIFOCount();
-	if ((mpuIntStatus & 0x10) || fifoCount == 1024)
-	{
-		mpu.resetFIFO();
-	}
-	else if (mpuIntStatus & 0x02)
-	{
-		while (fifoCount < packetSize)
-		{
-			fifoCount = mpu.getFIFOCount();
-		}
-		mpu.getFIFOBytes(fifoBuffer, packetSize);
-		fifoCount -= packetSize;
-		mpu.dmpGetQuaternion(&q, fifoBuffer);
-		mpu.dmpGetAccel(&aa, fifoBuffer);
-		mpu.dmpGetGravity(&gravity, &q);
-		mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-
-		gy[0] = (double)ypr[0];
-		gy[1] = (double)ypr[1];
-		gy[2] = (double)ypr[2];
-		mpu.dmpGetGyro(&gyro, fifoBuffer);
-		gyv[0] = (double)gyro.x;
-		gyv[1] = (double)gyro.y;
-		gyv[2] = (double)gyro.z;
-		y0 = (-1) * ypr[0];
-		y1 = (-1) * ypr[1];
-		y2 = ypr[2];
-
-		GetRotMatrix(rotation_matrix, (double)y0, (double)y1, (double)y2);
-
-		long int intaax = (long int)(aa.x / 7.6);
-		long int intaay = (long int)(aa.y / 8.0);
-		long int intaaz = (long int)(aa.z / 10.2);
-
-		intypr[0] = (long int)(ypr[0] * 1000);
-		intypr[1] = (long int)(ypr[1] * 1000);
-		intypr[2] = (long int)(ypr[2] * 1000);
-
-		aaxT = (double)((-1) * intypr[0] * 1000 + 930 * intypr[1] * 1000 + 3 * intypr[2] * 1000 + 3 * intypr[1] * intypr[1] + (-4) * intypr[2] * intypr[2] + 10 * intypr[0] * intypr[1] + 4 * intypr[1] * intypr[2] + 3 * intypr[0] * intypr[2] + 10 * intaax * 1000);
-		aayT = (double)(9 * intypr[0] * 1000 + (-20) * intypr[1] * 1000 + 940 * intypr[2] * 1000 + (-40) * intypr[1] * intypr[1] + (-30) * intypr[2] * intypr[2] + 30 * intypr[0] * intypr[1] + 40 * intypr[1] * intypr[2] + (-30) * intypr[0] * intypr[2] + 7 * intaay * 1000);
-		aazT = (double)((-4) * intypr[0] * 1000 + 10 * intypr[1] * 1000 + (-20) * intypr[2] * 1000 + 5 * intypr[0] * intypr[0] + 9 * intypr[1] * intypr[1] + (-10) * intypr[2] * intypr[2] + (-30) * intypr[0] * intypr[1] + (-30) * intypr[1] * intypr[2] + 9 * intypr[0] * intypr[2] + 990 * intaaz * 1000);
-		aaxT *= 0.000000001;
-		aayT *= 0.000000001;
-		aazT *= 0.000000001;
-		vz = rotation_matrix.GetElement(2, 0) * aaxT + rotation_matrix.GetElement(2, 1) * aayT + rotation_matrix.GetElement(2, 2) * aazT;
-
-		double delta_time = TimeUpdate() / 1000000;
-		rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
-		vn = (rvn * we - rvn2 * we - (delta_time / 2 * wh - 1) * (we - 2 / delta_time) * vn2 - ((delta_time / 2 * wh - 1) * (2 / delta_time + we) + (we - 2 / delta_time) * (1 + delta_time / 2 * wh)) * vn1) / (1 + delta_time / 2 * wh) / (2 / delta_time + we);
-		vn2 = vn1;
-		vn1 = vn;
-		rvn2 = rvn1;
-		rvn1 = rvn;
-		double Real;
-		Real = realaccel * 5;
-	}
-	if ((gzzz - gy[0]) > PI)
-	{
-		gztank += 2 * PI;
-	}
-	if ((gy[0] - gzzz) > PI)
-	{
-		gztank -= 2 * PI;
-	}
-
-	gzzz = gy[0];
-	gy[0] += gztank;
-	double target_angle;
-	if (countx == 10)
-	{
-		gyz = gy[0];
-	}
-	if (countx > 10)
-	{
-		switch (cspi1)
-		{
-		case 0: //後進
-			rover_motor.RoverPower(-1, 0);
-			break;
-		case 1: //回避
-			// do something
-			target_angle = 1.757 + stack_angle;
-			vkz_pid.InputPID(gyz - gy[0], target_angle, 0.01);
-			vkz = (-1) * vkz_pid.GetPID();
-			rover_motor.RoverPower(1, vkz);
-			break;
-		case 2: //回転
-			rover_motor.RoverPower(0, 0.5);
-			break;
-		case 3: //停止
-			rover_motor.RoverPower(0, 0);
-			break;
-		case 4: //Gカメラ進行
-			target_angle = (-1) * spi1 / 1000 + stack_angle;
-			vkz_pid.InputPID(gyz - gy[0], target_angle, 0.01);
-			vkz = (-1) * vkz_pid.GetPID();
-			rover_motor.RoverPower(1, vkz);
-			break;
-		case 5: //GPS
-			target_angle = (-1) * (double)spi1 / 1000 + ((int)((gyz - gy[0]) / 3.1415)) * 3.1415;
-			vkz_pid.InputPID(gyz - gy[0], target_angle, 0.01);
-			vkz = (-1) * vkz_pid.GetPID();
-			rover_motor.RoverPower(1, vkz);
-			break;
-		case 6://パラ分離
-			if (judge_bool == 0)
-			{
-				digitalWrite(11, HIGH);
-				delay(800);
-				digitalWrite(11, LOW);
-				delay(2000);
-				judge_bool = 1;
-			}
-		}
-
-		//Serial.println(vkz);
-	}
-
-	/*Serial.print(spi1);
-   Serial.print(" ");
-   Serial.print(cspi1);
-   Serial.print(" ");
-   Serial.println(target_angle);*/
-
-	//Serial.println(stack_angle);
-	countx++;
 }
 
 double TimeUpdate()
