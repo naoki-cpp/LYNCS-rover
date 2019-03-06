@@ -58,7 +58,7 @@ while True:
         if length * 1000 < 5 and judge == 1:
             if cs.Csearch2() == 1:
                 cs.Transfer(0,4)
-                sleep(2)
+                sleep(1)
                 sys.exit(0)
     # f r_theata[0]*1000 < 20:
     #    cs.Csearch2()
