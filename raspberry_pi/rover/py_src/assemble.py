@@ -2,6 +2,7 @@ from bin import lyncs_rover
 import rover_module as gps
 from rover_module import height
 from time import sleep
+import sys
 
 goal_lat, goal_log = [35.555744, 139.654071]
 
@@ -55,7 +56,10 @@ while True:
     for i in range(25):
         judge = cs.Csearch1()
         if length * 1000 < 5 and judge == 1:
-            cs.Csearch2()
+            if cs.Csearch2() == 1:
+                cs.Transfer(0,4)
+                sleep(2)
+                sys.exit(0)
     # f r_theata[0]*1000 < 20:
     #    cs.Csearch2()
     # else:

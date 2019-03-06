@@ -125,7 +125,7 @@ int ArduinoControl::Csearch2()
 		case 3:
 			s << "red object detected. goal.";
 			Transfer(0, 3);
-			return 0;
+			return 1;
 			break;
 		default:
 			break;
