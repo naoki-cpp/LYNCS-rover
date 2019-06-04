@@ -21,9 +21,6 @@ lyncs::Matrix<double, 3, 3> rotation_matrix = lyncs::Matrix<double, 3, 3>();
 lyncs::PIDController vkz_pid(4.8, 23.65, 0.2436);
 lyncs::PIDController kv_a_pid(1, 0, 0);
 long int intypr[3];
-double aaxT;
-double aayT;
-double aazT;
 
 double vz;
 double vn;
@@ -193,15 +190,15 @@ void loop()
 		intypr[1] = (long int)(ypr[1] * 1000);
 		intypr[2] = (long int)(ypr[2] * 1000);
 
-		aaxT = (double)((-1) * intypr[0] * 1000 + 930 * intypr[1] * 1000 + 3 * intypr[2] * 1000 + 3 * intypr[1] * intypr[1] + (-4) * intypr[2] * intypr[2] + 10 * intypr[0] * intypr[1] + 4 * intypr[1] * intypr[2] + 3 * intypr[0] * intypr[2] + 10 * intaax * 1000);
-		aayT = (double)(9 * intypr[0] * 1000 + (-20) * intypr[1] * 1000 + 940 * intypr[2] * 1000 + (-40) * intypr[1] * intypr[1] + (-30) * intypr[2] * intypr[2] + 30 * intypr[0] * intypr[1] + 40 * intypr[1] * intypr[2] + (-30) * intypr[0] * intypr[2] + 7 * intaay * 1000);
-		aazT = (double)((-4) * intypr[0] * 1000 + 10 * intypr[1] * 1000 + (-20) * intypr[2] * 1000 + 5 * intypr[0] * intypr[0] + 9 * intypr[1] * intypr[1] + (-10) * intypr[2] * intypr[2] + (-30) * intypr[0] * intypr[1] + (-30) * intypr[1] * intypr[2] + 9 * intypr[0] * intypr[2] + 990 * intaaz * 1000);
-		aaxT *= 0.000000001;
-		aayT *= 0.000000001;
-		aazT *= 0.000000001;
+		double aaxT = (double)((-1) * intypr[0] * 1000 + 930 * intypr[1] * 1000 + 3 * intypr[2] * 1000 + 3 * intypr[1] * intypr[1] + (-4) * intypr[2] * intypr[2] + 10 * intypr[0] * intypr[1] + 4 * intypr[1] * intypr[2] + 3 * intypr[0] * intypr[2] + 10 * intaax * 1000);
+		double aayT = (double)(9 * intypr[0] * 1000 + (-20) * intypr[1] * 1000 + 940 * intypr[2] * 1000 + (-40) * intypr[1] * intypr[1] + (-30) * intypr[2] * intypr[2] + 30 * intypr[0] * intypr[1] + 40 * intypr[1] * intypr[2] + (-30) * intypr[0] * intypr[2] + 7 * intaay * 1000);
+		double aazT = (double)((-4) * intypr[0] * 1000 + 10 * intypr[1] * 1000 + (-20) * intypr[2] * 1000 + 5 * intypr[0] * intypr[0] + 9 * intypr[1] * intypr[1] + (-10) * intypr[2] * intypr[2] + (-30) * intypr[0] * intypr[1] + (-30) * intypr[1] * intypr[2] + 9 * intypr[0] * intypr[2] + 990 * intaaz * 1000);
+		aaxT *= 1e-9;
+		aayT *= 1e-9;
+		aazT *= 1e-9;
 		vz = rotation_matrix.GetElement(2, 0) * aaxT + rotation_matrix.GetElement(2, 1) * aayT + rotation_matrix.GetElement(2, 2) * aazT;
 
-		double delta_time = TimeUpdate() / 1000000;
+		double delta_time = TimeUpdate() * 1e-6;
 		rvn = rvn1 + (vz - 1) * 9.8 * delta_time;
 		vn = (rvn * we - rvn2 * we - (delta_time / 2 * wh - 1) * (we - 2 / delta_time) * vn2 - ((delta_time / 2 * wh - 1) * (2 / delta_time + we) + (we - 2 / delta_time) * (1 + delta_time / 2 * wh)) * vn1) / (1 + delta_time / 2 * wh) / (2 / delta_time + we);
 		vn2 = vn1;
